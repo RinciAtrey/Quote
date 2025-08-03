@@ -1,8 +1,7 @@
-// main.dart
 import 'package:flutter/material.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
+import 'package:quotes_daily/view/CustomQuotePages/create_quote_page.dart';
 import 'package:timezone/data/latest.dart' as tz;
-import 'package:workmanager/workmanager.dart';
 import 'Utils/notifications/notification_service.dart';
 import 'Utils/routes/routes.dart';
 import 'View/MainPages/notificationPage.dart';
@@ -10,26 +9,12 @@ import 'View/MainPages/homePage.dart';
 import 'View/MainPages/MainExplorePage.dart';
 import 'View/MainPages/custom_quote.dart';
 
-void callbackDispatcher() {
-  Workmanager().executeTask((task, inputData) async {
-    if (task == "dailyQuoteTask") {
-      // Call the static method that fetches the quote and displays a notification.
-      await NotificationService.fetchAndShowNotification();
-    }
-    return Future.value(true);
-  });
-}
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   tz.initializeTimeZones();
 
-  // IMPORTANT: Set isInDebugMode to false to prevent debug notifications.
-  Workmanager().initialize(
-    callbackDispatcher,
-    isInDebugMode: false, // Change this from true to false.
-  );
-
+  //Initialize the local notification system
+  await NotificationService().initNotifications();
 
   runApp(MyApp());
 }
@@ -41,7 +26,7 @@ class MyApp extends StatelessWidget {
       title: 'Daily Quotes',
       debugShowCheckedModeBanner: false,
       home: HomeScreen(),
-        onGenerateRoute: Routes.generateRoute
+      onGenerateRoute: Routes.generateRoute,
     );
   }
 }
@@ -85,7 +70,8 @@ class _HomeScreenState extends State<HomeScreen> {
             HomePage(),
             NotificationPage(),
             MainExplorePage(),
-            CustomQuotePage(),
+            CustomQuote()
+            //CustomQuotePage(),
           ],
         ),
       ),

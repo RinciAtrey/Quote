@@ -1,67 +1,65 @@
-import 'package:path/path.dart';
-import 'package:quotes_daily/model/CustomQuote/custom_quote_model.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:path/path.dart';
 
-class DatabaseHelper{
-  static final DatabaseHelper _instance= DatabaseHelper._internal();
+import '../../model/CustomQuote/custom_quote_model.dart';
+
+class DatabaseHelper {
+  static final _dbName = 'quotes.db';
+  static final _dbVersion = 1;
+  static final tableName = 'quotes';
+
+  static final columnId = 'id';
+  static final columnQuote = 'quote';
+  static final columnAuthor = 'author';
+  static final columnColor = 'color';
+  static final columnIsBold = 'isBold';
+
+  DatabaseHelper._privateConstructor();
+  static final DatabaseHelper instance = DatabaseHelper._privateConstructor();
+
   static Database? _database;
-
-  factory DatabaseHelper()=> _instance;
-  DatabaseHelper._internal();
-
-
   Future<Database> get database async {
-    if(_database!= null)
-      return _database!;
-    _database= await _initDatabase();
+    if (_database != null) return _database!;
+    _database = await _initDatabase();
     return _database!;
   }
 
-  Future<Database> _initDatabase() async{
-    String path= join(await getDatabasesPath(),"quotes_db.db" );
-    return await openDatabase(path, version: 1, onCreate: _onCreate);
-}
-  Future<void> _onCreate(Database db, int version) async{
-
-    await db.execute(
-      '''
-      CREATE TABLE quotes(
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      content TEXT,
-      color TEXT,
-      dateTime TEXT)
-      '''
-      );
+  Future<Database> _initDatabase() async {
+    String path = join(await getDatabasesPath(), _dbName);
+    return await openDatabase(path, version: _dbVersion, onCreate: (db, version) {
+      db.execute('''
+        CREATE TABLE $tableName (
+          $columnId INTEGER PRIMARY KEY AUTOINCREMENT,
+          $columnQuote TEXT NOT NULL,
+          $columnAuthor TEXT NOT NULL,
+          $columnColor INTEGER NOT NULL,
+          $columnIsBold INTEGER NOT NULL
+        )
+      ''');
+    });
   }
 
-  Future<int> insertQuote(CustomQuoteModel quote) async{
-    final db= await database;
-    return await db.insert('quotes', quote.toMap());
-  }
-
-  Future<List<CustomQuoteModel>> getQuotes() async{
-    final db= await database;
-    final List<Map<String, dynamic>> maps = await db.query('quotes');
-    return List.generate(maps.length, (i)=> CustomQuoteModel.fromMap(maps[i]));
-  }
-
-  Future<int> updateQuote(CustomQuoteModel quote) async{
-    final db= await database;
-    return await db.update('quotes',
-        quote.toMap(),
-    where: 'id= ?',
-    whereArgs: [quote.id]
+  Future<int> insertQuote(CustomQuoteModel quote) async {
+    Database db = await database;
+    return await db.insert(
+      tableName,
+      quote.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
 
-  Future<int> deleteQuote(int id) async{
-    final db= await database;
-    return await db.delete('quotes',
-        where: 'id= ?',
-        whereArgs: [id]
-    );
+  Future<List<CustomQuoteModel>> getAllQuotes() async {
+    Database db = await database;
+    final maps = await db.query(tableName);
+    return maps.map((map) => CustomQuoteModel.fromMap(map)).toList();
   }
 
-
+  Future<int> deleteQuote(int id) async {
+    Database db = await database;
+    return await db.delete(
+      tableName,
+      where: '$columnId = ?',
+      whereArgs: [id],
+    );
+  }
 }
-

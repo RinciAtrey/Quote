@@ -1,13 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:quotes_daily/data/database/database_helper.dart';
-import 'package:quotes_daily/model/CustomQuote/TextInfoModel.dart';
-import '../../model/CustomQuote/custom_quote_model.dart';
+import 'package:quotes_daily/model/CustomQuote/custom_quote_model.dart';
 
-// actual editing page
 class CreateQuotePage extends StatefulWidget {
-  final CustomQuoteModel? quote;
-
-  const CreateQuotePage({this.quote});
+  const CreateQuotePage({super.key});
 
   @override
   State<CreateQuotePage> createState() => _CreateQuotePageState();
@@ -15,159 +11,131 @@ class CreateQuotePage extends StatefulWidget {
 
 class _CreateQuotePageState extends State<CreateQuotePage> {
   final _formKey = GlobalKey<FormState>();
-  final _titleController = TextEditingController();
-  final _contentController = TextEditingController();
-  final DatabaseHelper _databaseHelper = DatabaseHelper();
-  late TextEditingController textEditingController = TextEditingController();
-  List<TextInfoModel> texts = [];
+  String _quote = '';
+  String _author = '';
+  Color _bgColor = Colors.amber;
+  bool _isBold = false;
 
-  Color _selectedColor = Colors.amber;
   final List<Color> _colors = [
     Colors.amber,
-    Colors.redAccent,
+    Colors.red,
+    Colors.green,
+    Colors.blue,
     Colors.purple,
+    Colors.orange,
+    Colors.brown,
+    Colors.pink,
   ];
 
-  @override
-  void initState() {
-    super.initState();
-    if (widget.quote != null) {
-      _titleController.text = widget.quote!.content;
-      _selectedColor = Color(int.parse(widget.quote!.color));
-    }
-  }
-
-  String _formatDateTime(String dateTime) {
-    final DateTime dt = DateTime.parse(dateTime);
-    final now = DateTime.now();
-
-    if (dt.year == now.year && dt.month == now.month && dt.day == now.day) {
-      return 'Today, ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
-    }
-    return '${dt.day}/${dt.month}/${dt.year}, ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+  void _saveQuotes() async{
+    if(!_formKey.currentState!.validate()) return;
+    final model= CustomQuoteModel(quote: _quote.trim(),
+        author: _author.trim(),
+        color: _bgColor.value,
+      isBold: _isBold
+    );
+    await DatabaseHelper.instance.insertQuote(model);
+    Navigator.of(context).pop();
   }
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.quote == null ? 'Create Quote' : 'Edit Quote'),
-      ),
-      body: Form(
-        key: _formKey,
-        child: Column(
-          children: [
-            // Display the selected color in a circular container.
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 4),
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: _selectedColor,
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.black, width: 2),
-              ),
-            ),
-            const SizedBox(height: 16),
-            // Row of color options.
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: _colors.map((color) {
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _selectedColor = color;
-                    });
-                  },
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
-                      border: _selectedColor == color
-                          ? Border.all(color: Colors.black, width: 2)
-                          : null,
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-            // Additional widgets (such as TextFormField for quote text) go here.
-          ],
-        ),
-      ),
-
-      //Tapping on this will open the alert box
-      floatingActionButton: _addnewTextFab,
-    );
-  }
-
-  Widget get _addnewTextFab => FloatingActionButton(
-        onPressed: () => addNewDialog(context),
-        backgroundColor: Colors.white,
-        tooltip: 'Add New Text',
-        child: const Icon(
-          Icons.add,
-          color: Colors.black,
-        ),
-      );
-
-  addNewDialog(context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) => AlertDialog(
-        title: const Text(
-          'Add New Text',
-        ),
-        content: TextField(
-          controller: textEditingController,
-          maxLines: 5,
-          decoration: const InputDecoration(
-            suffixIcon: Icon(
-              Icons.edit,
-            ),
-            filled: true,
-            hintText: 'Your text here...',
-          ),
-        ),
+        title: Text("Create Quote"),
         actions: [
-          ElevatedButton(
-            onPressed: () {
-              addNewText(context);
-            },
-            style: ButtonStyle(
-              backgroundColor: WidgetStateProperty.all<Color>(Colors.red),
-              //add text colour
-            ),
-            child: Text('Back'),
-          ),
-          ElevatedButton(
-            onPressed: () {},
-            style: ButtonStyle(
-              backgroundColor: WidgetStateProperty.all<Color>(Colors.red),
-              //add text colour
-            ),
-            child: Text('Back'),
-          )
+          TextButton(onPressed:_saveQuotes , child: Text("Save"))
         ],
       ),
-    );
-  }
+      body: Column(
+        children: [
+          Form(
+            key: _formKey,
+            child: Container(
+              margin: EdgeInsets.all(16),
+              width: double.infinity,
+              //40% of screen height
+              height: screenHeight * 0.4,
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: _bgColor,
+                borderRadius: BorderRadius.circular(12)
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  TextFormField(
+                    initialValue: _quote,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: _isBold ? FontWeight.bold : FontWeight.normal,
+                      color: Colors.white,
+                    ),
+                    decoration: const InputDecoration(
+                      hintText: 'Enter your quote',
+                      hintStyle: TextStyle(color: Colors.white70),
+                      border: InputBorder.none,
+                      isDense: true,
+                    ),
+                    onChanged: (v) => setState(() => _quote = v),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Divider(color: Colors.white70, thickness: 1),
+                  ),
+                  const SizedBox(height: 8,),
+                  TextFormField(
+                    initialValue: _author,
+                    style: TextStyle(
+                      fontStyle: FontStyle.italic,
+                      fontWeight: _isBold ? FontWeight.bold : FontWeight.normal,
+                      color: Colors.white,
+                    ),
+                    decoration: const InputDecoration(
+                      hintText: 'Author',
+                      hintStyle: TextStyle(color: Colors.white70),
+                      border: InputBorder.none,
+                      isDense: true,
+                    ),
+                    onChanged: (v)=> setState(()=>
+                      _author=v),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 10,),
+          Container(
+            padding: EdgeInsets.all(16),
+            child: Align(
+                alignment: Alignment.centerLeft,
+                child: Wrap(
+                  spacing: 8,
+                  children: _colors.map((c) {
+                    return GestureDetector(
+                      onTap: () => setState(() => _bgColor = c),
+                      child: CircleAvatar(
+                        backgroundColor: c,
+                        child: _bgColor == c
+                            ? const Icon(Icons.check, color: Colors.white)
+                            : null,
+                      ),
+                    );
+                  }).toList(),
+                )
+            ),
+          ),
+          SwitchListTile(
+            title: const Text('Bold'),
+            value: _isBold,
+            onChanged: (v) => setState(() => _isBold = v),
+          ),
+        ],
 
-  addNewText(BuildContext context) {
-    setState(() {
-      texts.add(TextInfoModel(
-          text: textEditingController.text,
-          left: 0,
-          top: 0,
-          color: Colors.black,
-          fontWeight: FontWeight.normal,
-          fontStyle: FontStyle.normal,
-          fontSize: 20,
-          textAlign: TextAlign.left));
-      Navigator.of(context).pop();
-    });
+      ),
+    );
   }
 }

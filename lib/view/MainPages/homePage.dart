@@ -51,7 +51,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               indicatorColor: Colors.black,
               tabs: const [
                 Tab(text: "Explore"),
-                Tab(text: "Random"),
+                Tab(text: "Saved"),
               ],
             ),
           ),

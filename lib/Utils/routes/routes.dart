@@ -16,16 +16,16 @@ class Routes{
     switch(settings.name){
       case RoutesName.mainHomePage:
         return MaterialPageRoute(builder: (BuildContext context)=> HomePage());
-      case RoutesName.mainCustomPage:
-        return MaterialPageRoute(builder: (BuildContext context)=> CustomQuotePage());
+      // case RoutesName.mainCustomPage:
+      //   return MaterialPageRoute(builder: (BuildContext context)=> CustomQuotePage());
       case RoutesName.mainExplorePage:
         return MaterialPageRoute(builder: (BuildContext context)=> MainExplorePage());
       case RoutesName.mainNotificationPage:
         return MaterialPageRoute(builder: (BuildContext context)=> NotificationPage());
       case RoutesName.homeExplore:
         return MaterialPageRoute(builder: (BuildContext context)=> Explorepage());
-      case RoutesName.createQuotePage:
-        return MaterialPageRoute(builder: (BuildContext context)=> CreateQuotePage());
+      // case RoutesName.createQuotePage:
+      //   return MaterialPageRoute(builder: (BuildContext context)=> CreateQuotePage());
       default:
         return MaterialPageRoute(builder: (_){
           return Scaffold(

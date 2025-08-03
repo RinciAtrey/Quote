@@ -1,32 +1,33 @@
-class CustomQuoteModel{
+class CustomQuoteModel {
   final int? id;
-  final String content;
-  final String color;
-  final String dateTime;
+  final String quote;
+  final String author;
+  final int color;     // store as ARGB int
+  final bool isBold;
 
-  CustomQuoteModel({this.id,
-    required this.content,
+  CustomQuoteModel({
+    this.id,
+    required this.quote,
+    required this.author,
     required this.color,
-    required this.dateTime});
+    this.isBold = false,
+  });
 
+  Map<String, dynamic> toMap() => {
+    'id': id,
+    'quote': quote,
+    'author': author,
+    'color': color,
+    'isBold': isBold ? 1 : 0,
+  };
 
-  Map<String,dynamic> toMap(){
-    return{
-     'id': id,
-      'content' : content,
-      'color': color,
-      'dateTime': dateTime
-    };
-  }
-
-  factory CustomQuoteModel.fromMap(Map<String, dynamic> map){
+  factory CustomQuoteModel.fromMap(Map<String, dynamic> m) {
     return CustomQuoteModel(
-      id: map['id'],
-      content: map['content'],
-      color: map['color'],
-      dateTime: map['dateTime'],
-
+      id: m['id'] as int?,
+      quote: m['quote'] as String,
+      author: m['author'] as String,
+      color: m['color'] as int,
+      isBold: (m['isBold'] as int) == 1,
     );
   }
 }
-
