@@ -1,4 +1,4 @@
-# quotes_daily
+# Quotes Daily
 
 A new Flutter project.
 
