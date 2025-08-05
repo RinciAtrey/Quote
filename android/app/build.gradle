@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.example.quotes_daily"
-    compileSdk = 34 // Replace flutter.compileSdkVersion if dynamic
+    compileSdk = 35 // Replace flutter.compileSdkVersion if dynamic
     ndkVersion = "25.2.9519653" // Adjust to match your NDK version
 
     compileOptions{
@@ -24,7 +24,7 @@ android {
     defaultConfig {
         applicationId = "com.example.quotes_daily"
         minSdk = 21 // Replace flutter.minSdkVersion if dynamic
-        targetSdk = 34 // Replace flutter.targetSdkVersion if dynamic
+        targetSdk = 35 // Replace flutter.targetSdkVersion if dynamic
         versionCode = 1 // Replace flutter.versionCode if dynamic
         versionName = "1.0" // Replace flutter.versionName if dynamic
     }
