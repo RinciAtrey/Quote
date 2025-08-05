@@ -12,14 +12,12 @@ class QuotesViewViewModel with ChangeNotifier{
 
   setQuotesList(ApiResponse<List<QuotesModel>> response){
     quotesList=response;
-    print('setquotes: $quotesList');
     notifyListeners();
 
   }
   Future<void> fetchQuotesVM() async{
     setQuotesList(ApiResponse.loading());
     _myRepo.fetchQuotesRepo().then((value){
-      print("QuotesViewViewModel: $value");
       setQuotesList(ApiResponse.completed(value));
     }).onError((error, stackTrace) {
       print("Error fetching quotes : $error");

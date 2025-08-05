@@ -62,6 +62,9 @@ class NotificationService {
       final quote = data[0]["q"] as String;
       final author = data[0]["a"] as String;
 
+      print(quote);
+      print(author);
+
       final details = NotificationDetails(
         android: AndroidNotificationDetails(
           'daily_quotes_channel',
@@ -103,8 +106,6 @@ class NotificationService {
         UILocalNotificationDateInterpretation.absoluteTime,
         matchDateTimeComponents: DateTimeComponents.time,
       );
-
-      print("Scheduled daily quote at $scheduled");
     } catch (e) {
       print("Error scheduling daily notification: $e");
     }

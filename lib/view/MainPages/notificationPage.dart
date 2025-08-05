@@ -14,10 +14,11 @@ class NotificationPage extends StatefulWidget {
 
 class _NotificationPageState extends State<NotificationPage>
     with WidgetsBindingObserver {
+  bool _hasTimeScheduled = false;
   Time selectedTime = Time(hour: 11, minute: 30);
   final NotificationService _notificationService = NotificationService();
 
-  bool? _permissionGranted;
+  PermissionStatus? _permissionStatus;
   bool _checking = true;
 
   @override
@@ -26,6 +27,7 @@ class _NotificationPageState extends State<NotificationPage>
     WidgetsBinding.instance.addObserver(this);
     _notificationService.initNotifications();
     _checkPermission();
+    _loadScheduledTime();
   }
 
   @override
@@ -34,7 +36,7 @@ class _NotificationPageState extends State<NotificationPage>
     super.dispose();
   }
 
-  // Re-check permission when app comes back to foreground
+  //Re-check permission when app comes back to foreground
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
@@ -45,26 +47,29 @@ class _NotificationPageState extends State<NotificationPage>
   Future<void> _checkPermission() async {
     setState(() => _checking = true);
 
-    // Android
-    final androidStatus = await Permission.notification.status;
-
-    final granted = androidStatus.isGranted;
-
+    final status = await Permission.notification.status;
     setState(() {
-      _permissionGranted = granted;
+      _permissionStatus = status;
       _checking = false;
     });
   }
 
+
   Future<void> _requestPermission() async {
     try {
-      final granted = await _notificationService.requestPermission();
-      setState(() => _permissionGranted = granted);
+      final status = await Permission.notification.request();
+
+      setState(() => _permissionStatus = status);
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(granted
-              ? "You have given notification permission 👍"
-              : "Permission denied. You can enable it in Settings."),
+          content: Text(
+            status.isGranted
+                ? "You have given notification permission 👍"
+                : status.isPermanentlyDenied
+                ? "Permission permanently denied. Please enable it in Settings."
+                : "Permission denied. You can try again.",
+          ),
         ),
       );
     } catch (e) {
@@ -76,11 +81,9 @@ class _NotificationPageState extends State<NotificationPage>
 
   Future<void> _onTimeChanged(Time newTime) async {
     setState(() => selectedTime = newTime);
-
-    // Cancel any existing notifications
+    //Cancel any existing notifications
     await _notificationService.cancelNotifications();
-
-    // Schedule the new daily notification
+    //Schedule the new daily notification
     await _notificationService.scheduleDailyQuoteNotification(
       TimeOfDay(hour: newTime.hour, minute: newTime.minute),
     );
@@ -94,9 +97,29 @@ class _NotificationPageState extends State<NotificationPage>
         ),
       ),
     );
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('scheduledHour', newTime.hour);
+    await prefs.setInt('scheduledMinute', newTime.minute);
+
+    setState(() {
+      selectedTime = newTime;
+      _hasTimeScheduled = true;
+    });
   }
 
-
+  Future<void> _loadScheduledTime() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.containsKey('scheduledHour') && prefs.containsKey('scheduledMinute')) {
+      setState(() {
+        selectedTime = Time(
+          hour: prefs.getInt('scheduledHour')!,
+          minute: prefs.getInt('scheduledMinute')!,
+        );
+        _hasTimeScheduled = true;
+      });
+    }
+  }
 
 
   @override
@@ -105,58 +128,70 @@ class _NotificationPageState extends State<NotificationPage>
 
     if (_checking) {
       child = const CircularProgressIndicator();
-    } else if (_permissionGranted == true) {
-      child = Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            "Select Notification Time",
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          Text(
-            "${selectedTime.hour.toString().padLeft(2, '0')}:"
-            "${selectedTime.minute.toString().padLeft(2, '0')}",
-            style: Theme.of(context).textTheme.displayLarge,
-          ),
-          const SizedBox(height: 10),
-          TextButton(
-            style: TextButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.secondary,
+    } else if (_permissionStatus?.isGranted == true) {
+      if (_hasTimeScheduled) {
+        child = const Text(
+          "No quotes",
+          style: TextStyle(fontSize: 18, fontStyle: FontStyle.italic),
+        );
+      }
+      else {
+        child = Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              "Select Notification Time",
+              style: Theme
+                  .of(context)
+                  .textTheme
+                  .titleLarge,
             ),
-            onPressed: () {
-              Navigator.of(context).push(
-                showPicker(
-                  context: context,
-                  value: selectedTime,
-                  sunrise: const TimeOfDay(hour: 6, minute: 0),
-                  sunset: const TimeOfDay(hour: 18, minute: 0),
-                  onChange: _onTimeChanged,
-                  minuteInterval: TimePickerInterval.FIVE,
-                ),
-              );
-            },
-            child: const Text(
-              "Pick Time & Schedule",
-              style: TextStyle(color: Colors.white),
+            const SizedBox(height: 10),
+            TextButton(
+              style: TextButton.styleFrom(
+                backgroundColor: Theme
+                    .of(context)
+                    .colorScheme
+                    .secondary,
+              ),
+              onPressed: () {
+                Navigator.of(context).push(
+                  showPicker(
+                    context: context,
+                    value: selectedTime,
+                    sunrise: const TimeOfDay(hour: 6, minute: 0),
+                    sunset: const TimeOfDay(hour: 18, minute: 0),
+                    onChange: _onTimeChanged,
+                    minuteInterval: TimePickerInterval.FIVE,
+                  ),
+                );
+              },
+              child: const Text(
+                "Pick Time & Schedule",
+                style: TextStyle(color: Colors.white),
+              ),
             ),
-          ),
-        ],
-      );
-    } else {
-      // not granted
+          ],
+        );
+      }
+    } else{
+      final status = _permissionStatus!;
       child = ElevatedButton(
-        onPressed: () async {
-          // if user previously denied permanently, open settings
-          final status = await Permission.notification.status;
+        onPressed: () {
           if (status.isPermanentlyDenied) {
             openAppSettings();
           } else {
             _requestPermission();
           }
         },
-        child: Text("Enable notifications in settings"),
+        child: Text(
+          status.isPermanentlyDenied
+              ? "Enable notifications in Settings"
+              : "Enable notifications",
+        ),
       );
     }
+
 
     return Scaffold(
       appBar: AppBar(
@@ -170,35 +205,3 @@ class _NotificationPageState extends State<NotificationPage>
     );
   }
 }
-
-// Text(
-//   "Select Notification Time",
-//   style: Theme.of(context).textTheme.titleLarge,
-// ),
-// Text(
-//   "${selectedTime.hour.toString().padLeft(2, '0')}:"
-//       "${selectedTime.minute.toString().padLeft(2, '0')}",
-//   style: Theme.of(context).textTheme.displayLarge,
-// ),
-// const SizedBox(height: 10),
-// TextButton(
-//   style: TextButton.styleFrom(
-//     backgroundColor: Theme.of(context).colorScheme.secondary,
-//   ),
-//   onPressed: () {
-//     Navigator.of(context).push(
-//       showPicker(
-//         context: context,
-//         value: selectedTime,
-//         sunrise: const TimeOfDay(hour: 6, minute: 0),
-//         sunset: const TimeOfDay(hour: 18, minute: 0),
-//         onChange: onTimeChanged,
-//         minuteInterval: TimePickerInterval.FIVE,
-//       ),
-//     );
-//   },
-//   child: const Text(
-//     "Pick Time & Schedule",
-//     style: TextStyle(color: Colors.white),
-//   ),
-// ),

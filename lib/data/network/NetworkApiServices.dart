@@ -25,7 +25,6 @@ return responseJson;
     switch(response.statusCode){
       case 200:
         dynamic responseJson= jsonDecode(response.body);
-        print("NetworkApiServices $responseJson");
         return responseJson;
       case 400:
         BadRequestException(response.body.toString());

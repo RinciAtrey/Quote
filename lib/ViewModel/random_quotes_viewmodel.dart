@@ -12,14 +12,12 @@ class RandomQuotesViewViewModel with ChangeNotifier{
 
   setQuotesList(ApiResponse<List<QuotesRandomModel>> response){
     quotesList=response;
-    print('setquotes: $quotesList');
     notifyListeners();
 
   }
   Future<void> fetchRandomQuotesVM() async{
     setQuotesList(ApiResponse.loading());
     _myRepo.fetchRandomQuotesRepo().then((value){
-      print("RandomQuotesViewViewModel: $value");
       setQuotesList(ApiResponse.completed(value));
     }).onError((error, stackTrace) {
       print("Error fetching quotes : $error");
