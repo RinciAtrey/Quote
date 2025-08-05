@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:curved_navigation_bar/curved_navigation_bar.dart';
-import 'package:quotes_daily/view/CustomQuotePages/create_quote_page.dart';
+import 'package:flutter_snake_navigationbar/flutter_snake_navigationbar.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'Utils/notifications/notification_service.dart';
 import 'Utils/routes/routes.dart';
@@ -12,8 +11,6 @@ import 'View/MainPages/custom_quote.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   tz.initializeTimeZones();
-
-  //Initialize the local notification system
   await NotificationService().initNotifications();
 
   runApp(MyApp());
@@ -39,19 +36,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   final PageController _pageController = PageController();
-  final GlobalKey<CurvedNavigationBarState> _bottomNavigationKey =
-  GlobalKey();
 
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+  void _onNavBarTap(int index) {
     _pageController.animateToPage(
       index,
       duration: const Duration(milliseconds: 300),
@@ -59,38 +45,41 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: PageView(
-          controller: _pageController,
-          onPageChanged: (index) => setState(() => _selectedIndex = index),
-          children: [
-            HomePage(),
-            NotificationPage(),
-            MainExplorePage(),
-            CustomQuote()
-            //CustomQuotePage(),
-          ],
-        ),
-      ),
-      bottomNavigationBar: CurvedNavigationBar(
-        key: _bottomNavigationKey,
-        index: _selectedIndex,
-        items: const <Widget>[
-          Icon(Icons.home, size: 30, color: Colors.white),
-          Icon(Icons.notifications, size: 30, color: Colors.white),
-          Icon(Icons.explore, size: 30, color: Colors.white),
-          Icon(Icons.format_paint_outlined, size: 30, color: Colors.white),
-        ],
-        color: Colors.deepPurple,
-        buttonBackgroundColor: Colors.deepPurple,
-        backgroundColor: Colors.purple.withAlpha(100),
-        animationCurve: Curves.easeInOut,
-        animationDuration: const Duration(milliseconds: 600),
-        onTap: (index) => _onItemTapped(index),
-      ),
-    );
+  void _onPageChanged(int index) {
+    setState(() => _selectedIndex = index);
   }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    body: SafeArea(
+      child: PageView(
+        controller: _pageController,
+        onPageChanged: _onPageChanged,
+        children: const [
+          MainExplorePage(),
+          NotificationPage(),
+          HomePage(),
+          CustomQuote(),
+        ],
+      ),
+    ),
+    bottomNavigationBar: SnakeNavigationBar.color(
+      behaviour: SnakeBarBehaviour.pinned,
+      snakeShape: SnakeShape.indicator,
+      shape: const RoundedRectangleBorder(),     // flatten the ends
+      padding: EdgeInsets.zero,
+      snakeViewColor: Colors.white,
+      selectedItemColor: Colors.white,
+      unselectedItemColor: Colors.grey,
+      backgroundColor: Colors.black,
+      currentIndex: _selectedIndex,
+      onTap: _onNavBarTap,
+      items: const [
+        BottomNavigationBarItem(icon: Icon(Icons.explore), label: 'Explore'),
+        BottomNavigationBarItem(icon: Icon(Icons.notifications), label: 'Alerts'),
+        BottomNavigationBarItem(icon: Icon(Icons.home),   label: 'Home'),
+        BottomNavigationBarItem(icon: Icon(Icons.format_paint_outlined), label: 'Custom'),
+      ],
+    ),
+  );
 }

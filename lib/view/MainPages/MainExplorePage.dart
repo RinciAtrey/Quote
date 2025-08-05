@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:quotes_daily/data/response/status.dart';
+import 'package:quotes_daily/view/ExplorePages/card_design.dart';
 import '../../ViewModel/quotes_view_model.dart';
 import 'package:provider/provider.dart';
 import '../../model/quotes_model.dart';
@@ -38,7 +39,7 @@ class _QuotesListViewState extends State<QuotesListView>
   Widget build(BuildContext context) {
     super.build(context); // Ensures that the mixin works correctly
 
-    final viewModel = Provider.of<QuotesViewViewModel>(context); // Access the ViewModel
+    final viewModel = Provider.of<QuotesViewViewModel>(context);
     final status = viewModel.quotesList.status;
 
     if (status == Status.LOADING) {
@@ -53,14 +54,39 @@ class _QuotesListViewState extends State<QuotesListView>
         ),
       );
     } else if (status == Status.COMPLETED) {
-      final quotes = viewModel.quotesList.data ?? [];
-      return ListView.builder(
-        itemCount: quotes.length,
-        itemBuilder: (context, index) {
-          final QuotesModel quote = quotes[index];
-          return QuoteCard(quote: quote);
-        },
-      );
+      final List<QuotesModel> quotes = viewModel.quotesList.data!;
+      final List<Container> cards = quotes.asMap().entries.map((entry) {
+        final index = entry.key;
+        final quote = entry.value;
+        return Container(
+          alignment: Alignment.center,
+          margin: const EdgeInsets.symmetric(horizontal: 8),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.primaries[index % Colors.primaries.length].shade200,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                quote.q ?? 'No quote',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                '- ${quote.a ?? "Unknown"}',
+                style: const TextStyle(fontStyle: FontStyle.italic),
+              ),
+            ],
+          ),
+        );
+      }).toList();
+
+      // 2) Return your Example swiper, passing in those cards
+      return CardDesign(cards: cards,  quoteList: quotes,);
+
     } else {
       return const Center(
         child: Text("Unexpected State"),
@@ -97,3 +123,4 @@ class QuoteCard extends StatelessWidget {
     );
   }
 }
+

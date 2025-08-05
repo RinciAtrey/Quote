@@ -1,4 +1,3 @@
-// lib/Utils/notifications/notification_service.dart
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -10,43 +9,40 @@ class NotificationService {
   static final FlutterLocalNotificationsPlugin notificationsPlugin =
   FlutterLocalNotificationsPlugin();
 
-  /// ← updated to request permissions & create channel
   Future<void> initNotifications() async {
-    // 1. Time zones
+    // only timezone + channel + initialize
     tz.initializeTimeZones();
     tz.setLocalLocation(tz.getLocation('Asia/Kolkata'));
 
-    // 2. Initialization settings
     const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
-    final iOSInit = DarwinInitializationSettings();
-    final initSettings =
-    InitializationSettings(android: androidInit, iOS: iOSInit);
+    final iosInit    = DarwinInitializationSettings();
+    await notificationsPlugin.initialize(
+        InitializationSettings(android: androidInit, iOS: iosInit)
+    );
 
-    await notificationsPlugin.initialize(initSettings);
-
-    // 3. Create Android channel
+    // create channel (no permissions)
     const channel = AndroidNotificationChannel(
-      'daily_quotes_channel',
-      'Daily Quotes',
+      'daily_quotes_channel', 'Daily Quotes',
       description: 'Daily quote notifications',
       importance: Importance.high,
     );
     await notificationsPlugin
-        .resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>()
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(channel);
+  }
 
-    // 4. Request permissions
-    await notificationsPlugin
-        .resolvePlatformSpecificImplementation<
-        IOSFlutterLocalNotificationsPlugin>()
-        ?.requestPermissions(alert: true, badge: true, sound: true);
+  Future<bool> requestPermission() async {
+    final iosGranted = await notificationsPlugin
+        .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
+        ?.requestPermissions(alert: true, badge: true, sound: true)
+        ?? false;
 
-    // ← fixed here:
-    await notificationsPlugin
-        .resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>()
-        ?.requestNotificationsPermission();
+    final androidGranted = await notificationsPlugin
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestNotificationsPermission()
+        ?? false;
+
+    return iosGranted || androidGranted;
   }
 
 
@@ -54,7 +50,6 @@ class NotificationService {
     await notificationsPlugin.cancelAll();
   }
 
-  /// ← updated to use androidScheduleMode
   Future<void> scheduleDailyQuoteNotification(TimeOfDay time) async {
     try {
       final response =

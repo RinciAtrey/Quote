@@ -1,6 +1,6 @@
-// lib/View/MainPages/notificationPage.dart
 import 'package:flutter/material.dart';
 import 'package:day_night_time_picker/day_night_time_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../Utils/notifications/notification_service.dart';
 
 class NotificationPage extends StatefulWidget {
@@ -13,6 +13,15 @@ class NotificationPage extends StatefulWidget {
 class _NotificationPageState extends State<NotificationPage> {
   Time selectedTime = Time(hour: 11, minute: 30);
   final NotificationService _notificationService = NotificationService();
+  bool _hasAsked = false;
+  bool? _permissionGranted;
+
+  Future<void> _onEnablePressed() async {
+    setState(() => _hasAsked = true);
+    final granted = await NotificationService().requestPermission();
+    setState(() => _permissionGranted = granted);
+    if (granted) print("user allowed");
+  }
 
   @override
   void initState() {
@@ -41,52 +50,54 @@ class _NotificationPageState extends State<NotificationPage> {
     );
   }
 
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Notifications"),
-      ),
-      body: SafeArea(
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                "Select Notification Time",
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              Text(
-                "${selectedTime.hour.toString().padLeft(2, '0')}:"
-                    "${selectedTime.minute.toString().padLeft(2, '0')}",
-                style: Theme.of(context).textTheme.displayLarge,
-              ),
-              const SizedBox(height: 10),
-              TextButton(
-                style: TextButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.secondary,
-                ),
-                onPressed: () {
-                  Navigator.of(context).push(
-                    showPicker(
-                      context: context,
-                      value: selectedTime,
-                      sunrise: const TimeOfDay(hour: 6, minute: 0),
-                      sunset: const TimeOfDay(hour: 18, minute: 0),
-                      onChange: onTimeChanged,
-                      minuteInterval: TimePickerInterval.FIVE,
-                    ),
-                  );
-                },
-                child: const Text(
-                  "Pick Time & Schedule",
-                  style: TextStyle(color: Colors.white),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+    if (!_hasAsked || _permissionGranted == null) {
+      return ElevatedButton(
+        onPressed: _onEnablePressed,
+        child: Text("Enable notifications to get quotes"),
+      );
+    } else if (_permissionGranted == false) {
+      return ElevatedButton(
+        onPressed: () => openAppSettings(),
+        child: Text("Open Settings to enable"),
+      );
+    } else {
+      return SizedBox.shrink(); // or another UI when already allowed
+    }
   }
 }
+
+
+// Text(
+//   "Select Notification Time",
+//   style: Theme.of(context).textTheme.titleLarge,
+// ),
+// Text(
+//   "${selectedTime.hour.toString().padLeft(2, '0')}:"
+//       "${selectedTime.minute.toString().padLeft(2, '0')}",
+//   style: Theme.of(context).textTheme.displayLarge,
+// ),
+// const SizedBox(height: 10),
+// TextButton(
+//   style: TextButton.styleFrom(
+//     backgroundColor: Theme.of(context).colorScheme.secondary,
+//   ),
+//   onPressed: () {
+//     Navigator.of(context).push(
+//       showPicker(
+//         context: context,
+//         value: selectedTime,
+//         sunrise: const TimeOfDay(hour: 6, minute: 0),
+//         sunset: const TimeOfDay(hour: 18, minute: 0),
+//         onChange: onTimeChanged,
+//         minuteInterval: TimePickerInterval.FIVE,
+//       ),
+//     );
+//   },
+//   child: const Text(
+//     "Pick Time & Schedule",
+//     style: TextStyle(color: Colors.white),
+//   ),
+// ),

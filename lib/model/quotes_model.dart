@@ -3,8 +3,9 @@ class QuotesModel {
   String? a;
   String? c;
   String? h;
+  bool isFavorite=false;
 
-  QuotesModel({this.q, this.a, this.c, this.h});
+  QuotesModel({this.q, this.a, this.c, this.h, required this.isFavorite});
 
   @override
   String toString() {
@@ -16,6 +17,7 @@ class QuotesModel {
     a = json['a'];
     c = json['c'];
     h = json['h'];
+    isFavorite  = json['isFavorite'] = true;
   }
 
   Map<String, dynamic> toJson() {
@@ -24,6 +26,7 @@ class QuotesModel {
     data['a'] = this.a;
     data['c'] = this.c;
     data['h'] = this.h;
+    data['isFavorite']  = isFavorite;
     return data;
   }
 }
