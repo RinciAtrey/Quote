@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -57,6 +58,8 @@ class NotificationService {
       if (response.statusCode != 200) {
         print("Quote fetch failed: ${response.statusCode}");
         return;
+
+
       }
       final data = jsonDecode(response.body);
       final quote = data[0]["q"] as String;
@@ -106,6 +109,25 @@ class NotificationService {
         UILocalNotificationDateInterpretation.absoluteTime,
         matchDateTimeComponents: DateTimeComponents.time,
       );
+
+      final prefs = await SharedPreferences.getInstance();
+      final now2 = DateTime.now();
+      // store the quote and author
+      await prefs.setString('lastQuote', quote);
+      await prefs.setString('lastAuthor', author);
+      // calculate the actual delivery time
+      var delivery = tz.TZDateTime(
+        tz.local,
+        now.year,
+        now.month,
+        now.day,
+        time.hour,
+        time.minute,
+      );
+      if (delivery.isBefore(now2)) {
+        delivery = delivery.add(const Duration(days: 1));
+      }
+      await prefs.setInt('lastDeliveryEpoch', delivery.millisecondsSinceEpoch);
     } catch (e) {
       print("Error scheduling daily notification: $e");
     }

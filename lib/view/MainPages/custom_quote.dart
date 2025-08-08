@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:quotes_daily/model/CustomQuote/custom_quote_model.dart';
 import 'package:quotes_daily/view/CustomQuotePages/create_quote_page.dart';
 
@@ -52,11 +53,23 @@ class _CustomQuoteState extends State<CustomQuote> {
             child: ListTile(
               title: Text(
                 q.quote,
-                style: TextStyle(
+                style: GoogleFonts.getFont(
+                  q.fontFamily,
                   fontWeight: q.isBold ? FontWeight.bold : FontWeight.normal,
+                  color: Color(q.fontColor),
                 ),
               ),
-              subtitle: Text("-${q.author}"),
+              subtitle: q.author.trim().isNotEmpty
+                  ? Text(
+                '- ${q.author}',
+                style: GoogleFonts.getFont(
+                  q.fontFamily,
+                  fontStyle: FontStyle.italic,
+                  fontWeight: q.isBold ? FontWeight.bold : FontWeight.normal,
+                  color: Color(q.fontColor),
+                ),
+              )
+                  : null,
               onTap:  () async {
                 final wasDeleted = await Navigator.of(context).push<bool>(
                   MaterialPageRoute(

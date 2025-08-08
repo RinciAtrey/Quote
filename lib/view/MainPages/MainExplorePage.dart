@@ -1,9 +1,13 @@
+// lib/view/ExplorePages/main_explore_page.dart
+
 import 'package:flutter/material.dart';
+import 'package:quotes_daily/Utils/colors/AppColors.dart';
 import 'package:quotes_daily/data/response/status.dart';
 import 'package:quotes_daily/view/ExplorePages/card_design.dart';
 import '../../ViewModel/quotes_view_model.dart';
 import 'package:provider/provider.dart';
 import '../../model/quotes_model.dart';
+import 'package:share_plus/share_plus.dart';
 
 class MainExplorePage extends StatelessWidget {
   const MainExplorePage({super.key});
@@ -13,7 +17,7 @@ class MainExplorePage extends StatelessWidget {
     return ChangeNotifierProvider<QuotesViewViewModel>(
       create: (_) {
         final viewModel = QuotesViewViewModel();
-        viewModel.fetchQuotesVM(); 
+        viewModel.fetchQuotesVM();
         return viewModel;
       },
       child: Scaffold(
@@ -37,15 +41,13 @@ class _QuotesListViewState extends State<QuotesListView>
     with AutomaticKeepAliveClientMixin<QuotesListView> {
   @override
   Widget build(BuildContext context) {
-    super.build(context); // Ensures that the mixin works correctly
+    super.build(context);
 
     final viewModel = Provider.of<QuotesViewViewModel>(context);
     final status = viewModel.quotesList.status;
 
     if (status == Status.LOADING) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     } else if (status == Status.ERROR) {
       return Center(
         child: Text(
@@ -54,16 +56,15 @@ class _QuotesListViewState extends State<QuotesListView>
         ),
       );
     } else if (status == Status.COMPLETED) {
-      final List<QuotesModel> quotes = viewModel.quotesList.data!;
-      final List<Container> cards = quotes.asMap().entries.map((entry) {
-        final index = entry.key;
+      final quotes = viewModel.quotesList.data!;
+      final cards = quotes.asMap().entries.map((entry) {
         final quote = entry.value;
         return Container(
           alignment: Alignment.center,
           margin: const EdgeInsets.symmetric(horizontal: 8),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.primaries[index % Colors.primaries.length].shade200,
+            color: AppColors.appColor,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
@@ -71,56 +72,59 @@ class _QuotesListViewState extends State<QuotesListView>
             children: [
               Text(
                 quote.q ?? 'No quote',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
               Text(
                 '- ${quote.a ?? "Unknown"}',
-                style: const TextStyle(fontStyle: FontStyle.italic),
+                style: const TextStyle(
+                  fontStyle: FontStyle.italic,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 46),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.share, color: Colors.white),
+                    onPressed: () {
+                      Share.share(
+                        '"${quote.q}" — ${quote.a}',
+                        subject: 'Quote to share',
+                      );
+                    },
+                  ),
+                  const SizedBox(width: 55),
+                  IconButton(
+                    icon: Icon(
+                      quote.isFavorite
+                          ? Icons.favorite
+                          : Icons.favorite_border,
+                      color: Colors.white,
+                    ),
+                    onPressed: () => setState(() {
+                      quote.isFavorite = !quote.isFavorite;
+                    }),
+                  ),
+                ],
               ),
             ],
           ),
         );
       }).toList();
 
-      // 2) Return your Example swiper, passing in those cards
-      return CardDesign(cards: cards,  quoteList: quotes,);
-
+      return CardDesign(cards: cards, quoteList: quotes);
     } else {
-      return const Center(
-        child: Text("Unexpected State"),
-      );
+      return const Center(child: Text("Unexpected State"));
     }
   }
 
   @override
-  bool get wantKeepAlive => true; // Enable state persistence
+  bool get wantKeepAlive => true;
 }
-
-class QuoteCard extends StatelessWidget {
-  final QuotesModel quote;
-
-  const QuoteCard({required this.quote, super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.all(8.0),
-      child: ListTile(
-        title: Text(
-          quote.q ?? "No Quote Available",
-          style: const TextStyle(fontSize: 16.0),
-        ),
-        subtitle: Text(
-          quote.a ?? "Unknown Author",
-          style: const TextStyle(
-            fontStyle: FontStyle.italic,
-            color: Colors.grey,
-          ),
-        ),
-      ),
-    );
-  }
-}
-

@@ -42,36 +42,6 @@ class _ExamplePageState extends State<CardDesign> {
           cardBuilder: (ctx, index, _, __) => Stack(
             children: [
               widget.cards[index],
-              Positioned(
-                top: 8, right: 8,
-                child: IconButton(
-                  icon: Icon(
-                    widget.quoteList[index].isFavorite
-                        ? Icons.favorite
-                        : Icons.favorite_border,
-                    color: Colors.red,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      widget.quoteList[index].isFavorite =
-                      !widget.quoteList[index].isFavorite;
-                    });
-                  },
-                ),
-              ),
-              Positioned(
-                top: 8, left: 8,
-                child: IconButton(
-                  icon: const Icon(Icons.share, color: Colors.blue),
-                  onPressed: () {
-                    final q = widget.quoteList[index];
-                    Share.share(
-                      '"${q.q}" — ${q.a}',
-                      subject: 'Quote to share',
-                    );
-                  },
-                ),
-              ),
             ],
           ),
         ),

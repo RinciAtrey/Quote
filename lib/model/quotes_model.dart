@@ -17,7 +17,7 @@ class QuotesModel {
     a = json['a'];
     c = json['c'];
     h = json['h'];
-    isFavorite  = json['isFavorite'] = true;
+    isFavorite  = json['isFavorite'] = false;
   }
 
   Map<String, dynamic> toJson() {

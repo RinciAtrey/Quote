@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../data/database/database_helper.dart';
 import '../../model/CustomQuote/custom_quote_model.dart';
 
@@ -28,22 +29,26 @@ class QuoteDetailPage extends StatelessWidget {
                   Text(
                     quote.quote,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: GoogleFonts.getFont(
+                      quote.fontFamily,
                       fontSize: 20,
-                      color: Colors.white,
-                      fontWeight:
-                      quote.isBold ? FontWeight.bold : FontWeight.normal,
+                      fontWeight: quote.isBold ? FontWeight.bold : FontWeight.normal,
+                      color: Color(quote.fontColor),
                     ),
                   ),
                   const SizedBox(height: 24),
-                  Text(
-                    '- ${quote.author}',
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontStyle: FontStyle.italic,
-                      fontSize: 16,
+                  if (quote.author.trim().isNotEmpty)
+                    Text(
+                      '- ${quote.author}',
+                      style: GoogleFonts.getFont(
+                        quote.fontFamily,
+                        fontSize: 16,
+                        fontWeight: quote.isBold
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                          color: Color(quote.fontColor),
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),

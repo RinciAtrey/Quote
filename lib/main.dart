@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_snake_navigationbar/flutter_snake_navigationbar.dart';
+import 'package:quotes_daily/Utils/colors/AppColors.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'Utils/notifications/notification_service.dart';
 import 'Utils/routes/routes.dart';
@@ -66,12 +67,12 @@ class _HomeScreenState extends State<HomeScreen> {
     bottomNavigationBar: SnakeNavigationBar.color(
       behaviour: SnakeBarBehaviour.pinned,
       snakeShape: SnakeShape.indicator,
-      shape: const RoundedRectangleBorder(),     // flatten the ends
+      shape: const RoundedRectangleBorder(),     //flatten the ends
       padding: EdgeInsets.zero,
-      snakeViewColor: Colors.white,
-      selectedItemColor: Colors.white,
+      snakeViewColor: AppColors.appColor,
+      selectedItemColor: AppColors.appColor,
       unselectedItemColor: Colors.grey,
-      backgroundColor: Colors.black,
+      backgroundColor: Colors.white,
       currentIndex: _selectedIndex,
       onTap: _onNavBarTap,
       items: const [

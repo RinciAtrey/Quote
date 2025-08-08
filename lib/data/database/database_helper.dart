@@ -1,18 +1,22 @@
+import 'dart:async';
+
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
 import '../../model/CustomQuote/custom_quote_model.dart';
 
 class DatabaseHelper {
-  static final _dbName = 'quotes.db';
-  static final _dbVersion = 1;
-  static final tableName = 'quotes';
+  static final _dbName     = 'quotes.db';
+  static final _dbVersion  = 3;
+  static final tableName   = 'quotes';
 
-  static final columnId = 'id';
-  static final columnQuote = 'quote';
-  static final columnAuthor = 'author';
-  static final columnColor = 'color';
-  static final columnIsBold = 'isBold';
+  static final columnId         = 'id';
+  static final columnQuote      = 'quote';
+  static final columnAuthor     = 'author';
+  static final columnColor      = 'color';
+  static final columnIsBold     = 'isBold';
+  static final columnFontFamily = 'fontFamily';
+  static const columnFontColor  = 'fontColor';
 
   DatabaseHelper._privateConstructor();
   static final DatabaseHelper instance = DatabaseHelper._privateConstructor();
@@ -25,22 +29,46 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDatabase() async {
-    String path = join(await getDatabasesPath(), _dbName);
-    return await openDatabase(path, version: _dbVersion, onCreate: (db, version) {
-      db.execute('''
-        CREATE TABLE $tableName (
-          $columnId INTEGER PRIMARY KEY AUTOINCREMENT,
-          $columnQuote TEXT NOT NULL,
-          $columnAuthor TEXT NOT NULL,
-          $columnColor INTEGER NOT NULL,
-          $columnIsBold INTEGER NOT NULL
-        )
+    final path = join(await getDatabasesPath(), _dbName);
+    return await openDatabase(
+      path,
+      version: _dbVersion,
+      onCreate: _onCreate,
+      onUpgrade: _onUpgrade,             // ← add onUpgrade
+    );
+  }
+
+  FutureOr<void> _onCreate(Database db, int version) async {
+    await db.execute('''
+      CREATE TABLE $tableName (
+        $columnId INTEGER PRIMARY KEY AUTOINCREMENT,
+        $columnQuote TEXT    NOT NULL,
+        $columnAuthor TEXT   NOT NULL,
+        $columnColor INTEGER NOT NULL,
+        $columnIsBold INTEGER NOT NULL,
+        $columnFontFamily TEXT              
+        $columnFontColor  INTEGER
+      )
+    ''');
+  }
+
+  FutureOr<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    // if (oldVersion < 2) {
+    //   await db.execute('''
+    //     ALTER TABLE $tableName
+    //     ADD COLUMN $columnFontFamily TEXT DEFAULT 'Open Sans'
+    //   ''');
+    // }
+    if (oldVersion < 3) {
+      await db.execute('''
+        ALTER TABLE $tableName
+        ADD COLUMN $columnFontColor INTEGER DEFAULT ${0xFFFFFFFF}
       ''');
-    });
+    }
   }
 
   Future<int> insertQuote(CustomQuoteModel quote) async {
-    Database db = await database;
+    final db = await database;
     return await db.insert(
       tableName,
       quote.toMap(),
@@ -49,13 +77,13 @@ class DatabaseHelper {
   }
 
   Future<List<CustomQuoteModel>> getAllQuotes() async {
-    Database db = await database;
+    final db   = await database;
     final maps = await db.query(tableName);
-    return maps.map((map) => CustomQuoteModel.fromMap(map)).toList();
+    return maps.map((m) => CustomQuoteModel.fromMap(m)).toList();
   }
 
   Future<int> deleteQuote(int id) async {
-    Database db = await database;
+    final db = await database;
     return await db.delete(
       tableName,
       where: '$columnId = ?',
