@@ -28,6 +28,7 @@ Widget buildTimePickerButton(
   return TextButton(
     style: TextButton.styleFrom(
       backgroundColor: AppColors.appColor,
+      elevation: 5,
     ),
     onPressed: () {
       Navigator.of(context).push(
@@ -65,15 +66,6 @@ Widget buildLatestQuote(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            CircleAvatar(
-              backgroundColor: Theme.of(context).primaryColorLight,
-              child: Icon(
-                Icons.circle,
-                size: 24,
-                color: Theme.of(context).primaryColorDark,
-              ),
-            ),
-            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,

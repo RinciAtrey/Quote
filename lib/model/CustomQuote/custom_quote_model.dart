@@ -2,7 +2,7 @@ class CustomQuoteModel {
   final int? id;
   final String quote;
   final String author;
-  final int color;     // store as ARGB int
+  final int color;
   final bool isBold;
   final String fontFamily;
   final int fontColor;
@@ -13,7 +13,7 @@ class CustomQuoteModel {
     required this.author,
     required this.color,
     this.isBold = false,
-    this.fontFamily = 'Almendra Display',
+    this.fontFamily = 'Albert Sans',
     this.fontColor = 0xFFFFFFFF,
   });
 

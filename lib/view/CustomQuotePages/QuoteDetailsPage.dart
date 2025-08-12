@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../data/database/database_helper.dart';
+import '../../data/database/databaseHelper_customQuote.dart';
 import '../../model/CustomQuote/custom_quote_model.dart';
 
 class QuoteDetailPage extends StatelessWidget {
@@ -59,12 +59,6 @@ class QuoteDetailPage extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 IconButton(
-                  icon: const Icon(Icons.favorite_border),
-                  onPressed: () {
-                    // TODO: toggle favorite
-                  },
-                ),
-                IconButton(
                   icon: const Icon(Icons.share),
                   onPressed: () {
                     // TODO: share quote
@@ -73,7 +67,7 @@ class QuoteDetailPage extends StatelessWidget {
                 IconButton(
                   icon: const Icon(Icons.delete),
                   onPressed: () async {
-                    await DatabaseHelper.instance.deleteQuote(quote.id!);
+                    await DBCustomQuote.instance.deleteQuote(quote.id!);
                     // pop and tell list-screen to refresh:
                     Navigator.of(context).pop(true);
                   },

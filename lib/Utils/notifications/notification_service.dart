@@ -21,7 +21,6 @@ class NotificationService {
         InitializationSettings(android: androidInit, iOS: iosInit)
     );
 
-    // create channel (no permissions)
     const channel = AndroidNotificationChannel(
       'daily_quotes_channel', 'Daily Quotes',
       description: 'Daily quote notifications',
@@ -112,10 +111,9 @@ class NotificationService {
 
       final prefs = await SharedPreferences.getInstance();
       final now2 = DateTime.now();
-      // store the quote and author
       await prefs.setString('lastQuote', quote);
       await prefs.setString('lastAuthor', author);
-      // calculate the actual delivery time
+      //calculate the actual delivery time
       var delivery = tz.TZDateTime(
         tz.local,
         now.year,

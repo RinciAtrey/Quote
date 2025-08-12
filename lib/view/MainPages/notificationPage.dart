@@ -63,7 +63,7 @@ class _NotificationPageState extends State<NotificationPage>
       SnackBar(
         content: Text(
           status.isGranted
-              ? "Notification permission granted 👍"
+              ? "Notification permission granted"
               : status.isPermanentlyDenied
               ? "Permanently denied—enable in Settings."
               : "Permission denied.",
@@ -91,8 +91,8 @@ class _NotificationPageState extends State<NotificationPage>
     if (prefs.containsKey('lastQuote') &&
         prefs.containsKey('lastAuthor') &&
         prefs.containsKey('lastDeliveryEpoch')) {
-      final quote    = prefs.getString('lastQuote')!;
-      final author   = prefs.getString('lastAuthor')!;
+      final quote = prefs.getString('lastQuote')!;
+      final author = prefs.getString('lastAuthor')!;
       final delivery = DateTime.fromMillisecondsSinceEpoch(
         prefs.getInt('lastDeliveryEpoch')!,
       );
@@ -101,8 +101,8 @@ class _NotificationPageState extends State<NotificationPage>
       if (now.isAfter(delivery) &&
           now.isBefore(delivery.add(const Duration(hours: 12)))) {
         setState(() {
-          _lastQuote    = quote;
-          _lastAuthor   = author;
+          _lastQuote = quote;
+          _lastAuthor = author;
           _lastDelivery = delivery;
         });
         return;
@@ -115,8 +115,8 @@ class _NotificationPageState extends State<NotificationPage>
     }
 
     setState(() {
-      _lastQuote    = null;
-      _lastAuthor   = null;
+      _lastQuote = null;
+      _lastAuthor = null;
       _lastDelivery = null;
     });
   }
@@ -136,7 +136,8 @@ class _NotificationPageState extends State<NotificationPage>
       _showTimer = Timer(untilShow, _setQuoteFromPrefs);
     }
 
-    final untilClear = delivery.add(const Duration(hours: 12)).difference(now);
+    final untilClear =
+    delivery.add(const Duration(hours: 12)).difference(now);
     if (untilClear.isNegative) {
       _clearQuote();
     } else {
@@ -150,7 +151,7 @@ class _NotificationPageState extends State<NotificationPage>
         prefs.containsKey('lastAuthor') &&
         prefs.containsKey('lastDeliveryEpoch')) {
       setState(() {
-        _lastQuote  = prefs.getString('lastQuote');
+        _lastQuote = prefs.getString('lastQuote');
         _lastAuthor = prefs.getString('lastAuthor');
       });
     }
@@ -164,8 +165,8 @@ class _NotificationPageState extends State<NotificationPage>
         ..remove('lastDeliveryEpoch');
     });
     setState(() {
-      _lastQuote    = null;
-      _lastAuthor   = null;
+      _lastQuote = null;
+      _lastAuthor = null;
       _lastDelivery = null;
     });
   }
@@ -190,7 +191,6 @@ class _NotificationPageState extends State<NotificationPage>
     );
 
     final prefs = await SharedPreferences.getInstance();
-    // read back the delivery epoch your service wrote
     final storedEpoch = prefs.getInt('lastDeliveryEpoch')!;
     _lastDelivery = DateTime.fromMillisecondsSinceEpoch(storedEpoch);
 
@@ -229,28 +229,213 @@ class _NotificationPageState extends State<NotificationPage>
       );
     }
 
+    final mq = MediaQuery.of(context);
+    final width = mq.size.width;
+    final isTablet = width > 600;
+    final horizontalPadding = isTablet ? 24.0 : 14.0;
+    final cardRadius = isTablet ? 16.0 : 14.0;
+    final headerIconSize = isTablet ? 26.0 : 22.0;
+    final contentMaxWidth = isTablet ? 700.0 : double.infinity;
+
     return Scaffold(
-      appBar: AppBar(title: const Text("Notifications",
-        style: TextStyle(color: AppColors.appColor, fontWeight: FontWeight.bold),), ),
-      body: Padding(
-          padding: EdgeInsets.all(12),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
+      backgroundColor: const Color(0xFFF7F9FC),
+      appBar: AppBar(
+          elevation: 0,
+          backgroundColor: AppColors.appColor,
+          titleSpacing: 0,
+          title:
+          Padding(padding: EdgeInsets.all(8),
             child: Row(
               children: [
-                Text("Previously", style: TextStyle(fontSize: 15, color: AppColors.appColor),)
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withAlpha(30),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  padding: const EdgeInsets.all(8),
+                  child: Icon(Icons.notifications_active_outlined,
+                      color: Colors.white, size: headerIconSize),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  "Notifications",
+                  style: TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold),
+                ),
               ],
             ),
-          ),
-          SizedBox(height: 12,),
-          Column(
-              children:[ _buildBodyContent(context)]
-          ),
-        ],
+          )
       ),
-    )
+      body: Padding(
+        padding: const EdgeInsets.all(5.0),
+        child: SafeArea(
+          child: LayoutBuilder(builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding:
+              EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 18),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: contentMaxWidth),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Card(
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(cardRadius)),
+                        elevation: 2,
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: horizontalPadding, vertical: 14),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Container(
+                                padding: EdgeInsets.all(isTablet ? 12 : 10),
+                                decoration: BoxDecoration(
+                                  color: AppColors.appColor.withAlpha(20),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Icon(
+                                  Icons.lightbulb_outline,
+                                  size: headerIconSize,
+                                  color: AppColors.appColor,
+                                ),
+                              ),
+                              SizedBox(width: isTablet ? 14 : 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Daily Quote",
+                                      style: TextStyle(
+                                          fontSize: isTablet ? 18 : 16,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      "Receive one inspiring quote each day at a time you choose.",
+                                      style: TextStyle(
+                                          fontSize: isTablet ? 15 : 13,
+                                          color: Colors.black54,
+                                          height: 1.2),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              // small status chip
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: isTablet ? 12 : 8, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: _hasTimeScheduled
+                                      ? AppColors.appColor.withOpacity(0.14)
+                                      : Colors.grey.withOpacity(0.08),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  _hasTimeScheduled ? 'Scheduled' : 'Not scheduled',
+                                  style: TextStyle(
+                                      color: _hasTimeScheduled
+                                          ? AppColors.appColor
+                                          : Colors.black54,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: isTablet ? 13 : 12),
+                                ),
+                              )
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      SizedBox(height: isTablet ? 18 : 14),
+
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(cardRadius),
+                          boxShadow: [
+                            BoxShadow(
+                                color: Colors.black.withOpacity(0.04),
+                                blurRadius: 14,
+                                offset: const Offset(0, 8)),
+                          ],
+                        ),
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: horizontalPadding, vertical: isTablet ? 20 : 16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.history,
+                                    color: AppColors.appColor,
+                                    size: headerIconSize - 2,
+                                  ),
+                                  SizedBox(width: isTablet ? 12 : 10),
+                                  Text(
+                                    "Previously",
+                                    style: TextStyle(
+                                        fontSize: isTablet ? 16 : 15,
+                                        color: AppColors.appColor,
+                                        fontWeight: FontWeight.w600),
+                                  ),
+                                ],
+                              ),
+
+                              SizedBox(height: isTablet ? 14 : 12),
+                              _buildBodyContent(context),
+                              SizedBox(height: isTablet ? 18 : 14),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      SizedBox(height: isTablet ? 18 : 14),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              _hasTimeScheduled
+                                  ? "Next delivery"
+                                  : "No schedule set yet",
+                              style: TextStyle(
+                                  fontSize: isTablet ? 14 : 13,
+                                  color: Colors.black54),
+                            ),
+                          ),
+                          if (_hasTimeScheduled)
+                            Text(
+                              "${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')}",
+                              style: TextStyle(
+                                  fontSize: isTablet ? 15 : 14,
+                                  fontWeight: FontWeight.w600),
+                            ),
+                        ],
+                      ),
+
+                      SizedBox(height: isTablet ? 28 : 22),
+                      Center(
+                        child: Text(
+                          "You can reschedule or cancel anytime.",
+                          style: TextStyle(
+                              fontSize: isTablet ? 13 : 12, color: Colors.black45),
+                        ),
+                      ),
+
+                      SizedBox(height: isTablet ? 28 : 24),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
+      ),
     );
   }
 
@@ -287,6 +472,7 @@ class _NotificationPageState extends State<NotificationPage>
 
     return Column(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         topSection,
         const SizedBox(height: 24),
@@ -295,3 +481,6 @@ class _NotificationPageState extends State<NotificationPage>
     );
   }
 }
+
+
+

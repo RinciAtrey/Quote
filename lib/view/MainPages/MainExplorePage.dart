@@ -1,13 +1,11 @@
-// lib/view/ExplorePages/main_explore_page.dart
-
 import 'package:flutter/material.dart';
 import 'package:quotes_daily/Utils/colors/AppColors.dart';
 import 'package:quotes_daily/data/response/status.dart';
 import 'package:quotes_daily/view/ExplorePages/card_design.dart';
 import '../../ViewModel/quotes_view_model.dart';
 import 'package:provider/provider.dart';
-import '../../model/quotes_model.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../data/database/databaseHelper_favorite.dart';
 
 class MainExplorePage extends StatelessWidget {
   const MainExplorePage({super.key});
@@ -49,12 +47,7 @@ class _QuotesListViewState extends State<QuotesListView>
     if (status == Status.LOADING) {
       return const Center(child: CircularProgressIndicator());
     } else if (status == Status.ERROR) {
-      return Center(
-        child: Text(
-          viewModel.quotesList.message ?? 'An error occurred',
-          style: const TextStyle(color: Colors.red),
-        ),
-      );
+      return const Center(child: CircularProgressIndicator());
     } else if (status == Status.COMPLETED) {
       final quotes = viewModel.quotesList.data!;
       final cards = quotes.asMap().entries.map((entry) {
@@ -108,10 +101,17 @@ class _QuotesListViewState extends State<QuotesListView>
                           : Icons.favorite_border,
                       color: Colors.white,
                     ),
-                    onPressed: () => setState(() {
-                      quote.isFavorite = !quote.isFavorite;
-                    }),
-                  ),
+                      onPressed: () async {
+                        setState(() {
+                          quote.isFavorite = !quote.isFavorite;
+                        });
+                        if (quote.isFavorite) {
+                          await DBHelper.instance.insertFavorite(DBFavorite(text: quote.q ?? '', author: quote.a ?? 'Unknown'));
+                        } else {
+                          await DBHelper.instance.deleteFavoriteByTextAuthor(quote.q ?? '', quote.a ?? 'Unknown');
+                        }
+                      }
+                    ),
                 ],
               ),
             ],
@@ -121,7 +121,7 @@ class _QuotesListViewState extends State<QuotesListView>
 
       return CardDesign(cards: cards, quoteList: quotes);
     } else {
-      return const Center(child: Text("Unexpected State"));
+      return const Center(child: CircularProgressIndicator());
     }
   }
 

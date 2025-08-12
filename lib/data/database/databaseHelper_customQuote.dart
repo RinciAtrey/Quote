@@ -5,7 +5,7 @@ import 'package:path/path.dart';
 
 import '../../model/CustomQuote/custom_quote_model.dart';
 
-class DatabaseHelper {
+class DBCustomQuote {
   static final _dbName     = 'quotes.db';
   static final _dbVersion  = 3;
   static final tableName   = 'quotes';
@@ -18,8 +18,8 @@ class DatabaseHelper {
   static final columnFontFamily = 'fontFamily';
   static const columnFontColor  = 'fontColor';
 
-  DatabaseHelper._privateConstructor();
-  static final DatabaseHelper instance = DatabaseHelper._privateConstructor();
+  DBCustomQuote._privateConstructor();
+  static final DBCustomQuote instance = DBCustomQuote._privateConstructor();
 
   static Database? _database;
   Future<Database> get database async {
@@ -34,7 +34,7 @@ class DatabaseHelper {
       path,
       version: _dbVersion,
       onCreate: _onCreate,
-      onUpgrade: _onUpgrade,             // ← add onUpgrade
+      onUpgrade: _onUpgrade,
     );
   }
 

@@ -7,7 +7,6 @@ import '../repository/quotes_repo.dart';
 class QuotesViewViewModel with ChangeNotifier{
   final _myRepo= QuotesRepo();
 
-  //ApiResponse<QuotesModel> quotesList= ApiResponse.loading();
   ApiResponse<List<QuotesModel>> quotesList = ApiResponse.loading();
 
   setQuotesList(ApiResponse<List<QuotesModel>> response){

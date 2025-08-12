@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:quotes_daily/Utils/routes/routes_name.dart';
 import 'package:quotes_daily/View/MainPages/homePage.dart';
-import 'package:quotes_daily/view/CustomQuotePages/create_quote_page.dart';
-
 import '../../View/MainPages/MainExplorePage.dart';
 import '../../View/MainPages/notificationPage.dart';
 import '../../view/HomepagePages/HomeExplorePage.dart';
-import '../../view/MainPages/custom_quote.dart';
 
 class Routes{
 
