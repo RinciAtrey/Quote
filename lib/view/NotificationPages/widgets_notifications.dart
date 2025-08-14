@@ -15,6 +15,7 @@ Widget buildPermissionButton(
       isPermDenied
           ? "Enable notifications in Settings"
           : "Enable notifications",
+      style: TextStyle(color: AppColors.appColor)
     ),
   );
 }
@@ -42,7 +43,7 @@ Widget buildTimePickerButton(
         ),
       );
     },
-    child: Text(label, style: const TextStyle(color: Colors.white)),
+    child: Text(label, style: const TextStyle(color: Colors.white, fontSize: 12)),
   );
 }
 
@@ -104,7 +105,7 @@ Widget buildCancelButton({
 }) {
   return TextButton(
     onPressed: onCancel,
-    child: const Text("Cancel Notifications"),
+    child: const Text("Cancel Notifications", style: TextStyle(fontSize: 12),),
     style: ButtonStyle(foregroundColor: MaterialStateProperty.all(AppColors.appColor)),
   );
 }

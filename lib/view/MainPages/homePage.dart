@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../Utils/colors/AppColors.dart';
 import 'package:quotes_daily/data/response/status.dart';
+import '../../Utils/customSnackBar.dart';
 import '../../ViewModel/today_quotes_viewmodel.dart';
 import '../../data/database/databaseHelper_favorite.dart';
 import '../HomepagePages/FavoriteSearch.dart';
@@ -56,56 +57,85 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin, Auto
   @override
   bool get wantKeepAlive => true;
 
-  void _showSnack(String text) {
-    HapticFeedback.lightImpact();
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text), duration: const Duration(milliseconds: 800)));
-  }
-
   Future<void> _deleteFavorite(int id) async {
     await DBHelper.instance.deleteFavoriteById(id);
-    _showSnack("Deleted");
+    CustomSnackBar.show(context, "Deleted", Icons.delete, AppColors.appColor);
   }
 
   Future<void> _shareFavorite(DBFavorite q) async {
     await Share.share('"${q.text}" — ${q.author}', subject: 'Quote to share');
-    _showSnack("Shared");
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
     final theme = Theme.of(context);
+    final w = MediaQuery.of(context).size.width;
+    final bool compact = w < 420;
+    final double quoteIconSize = compact ? 36.0 : 42.0;
+    final double shareIconSize = compact ? 18.0 : 20.0;
 
     return Scaffold(
       appBar: AppBar(
-        elevation: 0,
-        backgroundColor: AppColors.appColor,
+        titleSpacing: 0,
+        backgroundColor: Colors.transparent,
+        elevation: 6,
         foregroundColor: Colors.white,
-        title: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: const Text('Quotes', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
+        toolbarHeight: 70,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            bottomLeft: Radius.circular(18),
+            bottomRight: Radius.circular(18),
+          ),
         ),
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            color: AppColors.appColor,
+            borderRadius: const BorderRadius.only(
+              bottomLeft: Radius.circular(18),
+              bottomRight: Radius.circular(18),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.12),
+                blurRadius: 16,
+                offset: Offset(0, 8),
+              ),
+            ],
+          ),
+        ),
+        title: const Text(
+          'Home',
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white),
+        ),
+        leading: const Icon(Icons.home),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              showSearch<DBFavorite?>(
-                context: context,
-                delegate: FavoriteSearch(),
-              ).then((picked) {
-                if (picked != null) {
-                  _shareFavorite(picked);
-                }
-              });
-            },
-            tooltip: "Search favorite quotes",
+          Padding(
+            padding: const EdgeInsets.only(right: 10.0),
+            child: Material(
+              color: Colors.white.withOpacity(0.12),
+              shape: const CircleBorder(),
+              child: IconButton(
+                icon: const Icon(Icons.search),
+                color: Colors.white,
+                onPressed: () {
+                  showSearch<DBFavorite?>(context: context, delegate: FavoriteSearch())
+                      .then((picked) {
+                    if (picked != null) {
+                      _shareFavorite(picked);
+                    }
+                  });
+                },
+              ),
+            ),
           ),
         ],
       ),
+
       backgroundColor: const Color(0xFFF6F7FB),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20),
           child: Column(
             children: [
               ChangeNotifierProvider<TodayQuotesViewViewModel>.value(
@@ -129,7 +159,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin, Auto
                       width: double.infinity,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(18),
-                        gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF8EC5FF), Color(0xFFE0C3FC)]),
+                        color: AppColors.appColor,
                         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 12, offset: const Offset(0, 6))],
                       ),
                       child: Material(
@@ -141,39 +171,39 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin, Auto
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Padding(
-                                  padding: EdgeInsets.only(right: 12.0, top: 6),
-                                  child: Icon(Icons.format_quote, size: 42, color: Colors.white70),
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 12.0, top: 6),
+                                  child: Icon(Icons.format_quote, size: quoteIconSize, color: Colors.white),
                                 ),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text("Quote of the Day", style: theme.textTheme.labelLarge?.copyWith(color: Colors.white70, fontWeight: FontWeight.w600)),
+                                      Text("Quote of the Day", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                                       const SizedBox(height: 6),
                                       if (vm.quotesList.status == Status.LOADING)
                                         Padding(
                                           padding: const EdgeInsets.symmetric(vertical: 12.0),
                                           child: Row(
-                                            children: const [
-                                              SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2.0, valueColor: AlwaysStoppedAnimation<Color>(Colors.white))),
-                                              SizedBox(width: 12),
-                                              Text("Loading today's quote...", style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w600)),
+                                            children: [
+                                              const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2.0, valueColor: AlwaysStoppedAnimation<Color>(Colors.white))),
+                                              const SizedBox(width: 12),
+                                              Text("Loading today's quote...", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
                                             ],
                                           ),
                                         )
                                       else
-                                        Text(displayText, style: theme.textTheme.headlineSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.w700)),
+                                        Text(displayText, style: TextStyle(color: Colors.white, fontSize: 11)),
                                       const SizedBox(height: 12),
                                       Row(
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
-                                          Text("- $displayAuthor", style: theme.textTheme.bodySmall?.copyWith(color: Colors.white70, fontStyle: FontStyle.italic)),
+                                          Text("- $displayAuthor", style: TextStyle(color: Colors.white, fontSize: 12)),
                                           Row(
                                             children: [
-                                              IconButton(onPressed: ()   async {
+                                              IconButton(onPressed: () async {
                                                 await Share.share('"${displayText}" — ${displayAuthor}', subject: 'Quote to share');
-                                              }, icon: const Icon(Icons.ios_share), color: Colors.white, tooltip: "Share"),
+                                              }, icon: Icon(Icons.ios_share, size: shareIconSize), color: Colors.white),
                                             ],
                                           )
                                         ],
@@ -193,18 +223,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin, Auto
 
               const SizedBox(height: 18),
 
-              // Saved header
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Your Favorite Quotes', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+                  Text('Your Favorite Quotes', style: TextStyle( color: AppColors.appColor, fontSize: 17)),
                   Text('${savedQuotes.length} items', style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey[700])),
                 ],
               ),
 
               const SizedBox(height: 10),
 
-              // saved list
               Expanded(
                 child: loadingFavorites
                     ? const Center(child: CircularProgressIndicator())
@@ -247,11 +275,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin, Auto
                           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           leading: CircleAvatar(
                             radius: 26,
-                            backgroundColor: Colors.primaries[index % Colors.primaries.length][200],
+                            backgroundColor: AppColors.appColor.withAlpha(180),
                             child: Text(q.author.isNotEmpty ? q.author[0].toUpperCase() : '?', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
                           ),
-                          title: Text(q.text, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w600)),
-                          subtitle: Text(q.author, style: const TextStyle(fontStyle: FontStyle.italic)),
+                          title: Text(q.text, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
+                          subtitle: Text(q.author, style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 8)),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -290,14 +318,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin, Auto
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Theme.of(context).colorScheme.primary,
-                      Theme.of(context).colorScheme.primary.withOpacity(0.85),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+               color: AppColors.appColor,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(Icons.format_quote, color: Colors.white, size: 20),
@@ -312,7 +333,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin, Auto
             ],
           ),
 
-          // Content: quote + author
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -343,7 +363,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin, Auto
                 padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 18),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
-              child: const Text('Close'),
+              child: const Text('Close', style: TextStyle(color: AppColors.appColor),),
             ),
             ElevatedButton(
               onPressed: () {
@@ -358,17 +378,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin, Auto
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: const [
-                  Icon(Icons.share_outlined, size: 18),
+                  Icon(Icons.share_outlined, size: 18, color: AppColors.appColor,),
                   SizedBox(width: 8),
-                  Text('Share'),
+                  Text('Share', style: TextStyle(color: AppColors.appColor),),
                 ],
               ),
             ),
           ],
         );
-
       },
     );
   }
 }
-

@@ -1,12 +1,14 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 import 'package:quotes_daily/Utils/colors/AppColors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:day_night_time_picker/day_night_time_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../Utils/notifications/notification_service.dart';
 import '../NotificationPages/widgets_notifications.dart';
+import '../../Utils/customSnackBar.dart';
 
 class NotificationPage extends StatefulWidget {
   const NotificationPage({super.key});
@@ -31,7 +33,6 @@ class _NotificationPageState extends State<NotificationPage>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _notificationService.initNotifications();
     _initializePage();
   }
 
@@ -59,17 +60,12 @@ class _NotificationPageState extends State<NotificationPage>
   Future<void> _requestPermission() async {
     final status = await Permission.notification.request();
     setState(() => _permissionStatus = status);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          status.isGranted
-              ? "Notification permission granted"
-              : status.isPermanentlyDenied
-              ? "Permanently denied—enable in Settings."
-              : "Permission denied.",
-        ),
-      ),
-    );
+
+    CustomSnackBar.show(context,  status.isGranted
+        ? "Notification permission granted"
+        : status.isPermanentlyDenied
+        ? "Permanently denied—enable in Settings."
+        : "Permission denied.", Icons.notifications_active, AppColors.appColor);
   }
 
   Future<void> _loadScheduledTime() async {
@@ -174,16 +170,7 @@ class _NotificationPageState extends State<NotificationPage>
   Future<void> _onTimeChanged(Time newTime) async {
     setState(() => selectedTime = newTime);
 
-    // immediate SnackBar
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          "Daily quote scheduled for "
-              "${newTime.hour.toString().padLeft(2, '0')}:"
-              "${newTime.minute.toString().padLeft(2, '0')}",
-        ),
-      ),
-    );
+    CustomSnackBar.show(context, "Daily quote scheduled for ${newTime.hour.toString().padLeft(2, '0')}:${newTime.minute.toString().padLeft(2, '0')}", Icons.check, AppColors.appColor);
 
     await _notificationService.cancelNotifications();
     await _notificationService.scheduleDailyQuoteNotification(
@@ -191,8 +178,16 @@ class _NotificationPageState extends State<NotificationPage>
     );
 
     final prefs = await SharedPreferences.getInstance();
-    final storedEpoch = prefs.getInt('lastDeliveryEpoch')!;
-    _lastDelivery = DateTime.fromMillisecondsSinceEpoch(storedEpoch);
+    final storedEpoch = prefs.getInt('lastDeliveryEpoch');
+    if (storedEpoch != null) {
+      _lastDelivery = DateTime.fromMillisecondsSinceEpoch(storedEpoch);
+    } else {
+      final now = DateTime.now();
+      var delivery = DateTime(now.year, now.month, now.day, newTime.hour, newTime.minute);
+      if (!delivery.isAfter(now)) delivery = delivery.add(const Duration(days: 1));
+      _lastDelivery = delivery;
+      await prefs.setInt('lastDeliveryEpoch', delivery.millisecondsSinceEpoch);
+    }
 
     await prefs
       ..setInt('scheduledHour', newTime.hour)
@@ -222,12 +217,21 @@ class _NotificationPageState extends State<NotificationPage>
   }
 
   @override
-  Widget build(BuildContext context) {
-    if (_checking) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed) {
+
+      _notificationService.ensureAlarmScheduledFromPrefs().then((_) {
+        print('NotificationPage: ensureAlarmScheduledFromPrefs called on resume');
+      }).catchError((e) {
+        print('NotificationPage: ensureAlarmScheduledFromPrefs error: $e');
+      });
     }
+  }
+
+
+  @override
+  Widget build(BuildContext context) {
 
     final mq = MediaQuery.of(context);
     final width = mq.size.width;
@@ -237,117 +241,134 @@ class _NotificationPageState extends State<NotificationPage>
     final headerIconSize = isTablet ? 26.0 : 22.0;
     final contentMaxWidth = isTablet ? 700.0 : double.infinity;
 
+    if (_checking) {
+      return Scaffold(
+        body: Center(
+          child: Lottie.asset(
+            "assets/animations/loadingTeddy.json",
+            height: isTablet ? 260 : 200,
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF7F9FC),
       appBar: AppBar(
-          elevation: 0,
-          backgroundColor: AppColors.appColor,
-          titleSpacing: 0,
-          title:
-          Padding(padding: EdgeInsets.all(8),
-            child: Row(
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white.withAlpha(30),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  padding: const EdgeInsets.all(8),
-                  child: Icon(Icons.notifications_active_outlined,
-                      color: Colors.white, size: headerIconSize),
-                ),
-                const SizedBox(width: 12),
-                const Text(
-                  "Notifications",
-                  style: TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold),
-                ),
-              ],
+        titleSpacing: 0,
+        backgroundColor: Colors.transparent,
+        elevation: 6,
+        foregroundColor: Colors.white,
+        // increases height (responsive)
+        toolbarHeight: isTablet ? 80 : 70,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            bottomLeft: Radius.circular(18),
+            bottomRight: Radius.circular(18),
+          ),
+        ),
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            color: AppColors.appColor,
+            borderRadius: const BorderRadius.only(
+              bottomLeft: Radius.circular(18),
+              bottomRight: Radius.circular(18),
             ),
-          )
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.12),
+                blurRadius: 16,
+                offset: Offset(0, 8),
+              ),
+            ],
+          ),
+        ),
+        title: const Text(
+          'Notifications',
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white),
+        ),
+        leading: Icon(Icons.notifications_active_outlined,
+            color: Colors.white, size: headerIconSize),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(5.0),
+        padding: EdgeInsets.all(isTablet ? 12.0 : 5.0),
         child: SafeArea(
           child: LayoutBuilder(builder: (context, constraints) {
             return SingleChildScrollView(
-              padding:
-              EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 18),
+              padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: isTablet ? 22 : 18),
               child: Center(
                 child: ConstrainedBox(
                   constraints: BoxConstraints(maxWidth: contentMaxWidth),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Card(
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(cardRadius)),
-                        elevation: 2,
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: horizontalPadding, vertical: 14),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Container(
-                                padding: EdgeInsets.all(isTablet ? 12 : 10),
-                                decoration: BoxDecoration(
-                                  color: AppColors.appColor.withAlpha(20),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Icon(
-                                  Icons.lightbulb_outline,
-                                  size: headerIconSize,
-                                  color: AppColors.appColor,
-                                ),
-                              ),
-                              SizedBox(width: isTablet ? 14 : 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      "Daily Quote",
-                                      style: TextStyle(
-                                          fontSize: isTablet ? 18 : 16,
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      "Receive one inspiring quote each day at a time you choose.",
-                                      style: TextStyle(
-                                          fontSize: isTablet ? 15 : 13,
-                                          color: Colors.black54,
-                                          height: 1.2),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              // small status chip
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: isTablet ? 12 : 8, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: _hasTimeScheduled
-                                      ? AppColors.appColor.withOpacity(0.14)
-                                      : Colors.grey.withOpacity(0.08),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  _hasTimeScheduled ? 'Scheduled' : 'Not scheduled',
-                                  style: TextStyle(
-                                      color: _hasTimeScheduled
-                                          ? AppColors.appColor
-                                          : Colors.black54,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: isTablet ? 13 : 12),
-                                ),
-                              )
-                            ],
-                          ),
-                        ),
-                      ),
+                      // Card(
+                      //   shape: RoundedRectangleBorder(
+                      //       borderRadius: BorderRadius.circular(cardRadius)),
+                      //   elevation: 2,
+                      //   child: Padding(
+                      //     padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: isTablet ? 16 : 14),
+                      //     child: Row(
+                      //       crossAxisAlignment: CrossAxisAlignment.center,
+                      //       children: [
+                      //         Container(
+                      //           padding: EdgeInsets.all(isTablet ? 12 : 10),
+                      //           decoration: BoxDecoration(
+                      //             color: AppColors.appColor.withAlpha(20),
+                      //             borderRadius: BorderRadius.circular(10),
+                      //           ),
+                      //           child: Icon(
+                      //             Icons.lightbulb_outline,
+                      //             size: headerIconSize,
+                      //             color: AppColors.appColor,
+                      //           ),
+                      //         ),
+                      //         SizedBox(width: isTablet ? 14 : 12),
+                      //         Expanded(
+                      //           child: Column(
+                      //             crossAxisAlignment: CrossAxisAlignment.start,
+                      //             children: [
+                      //               Text(
+                      //                 "Daily Quote",
+                      //                 style: TextStyle(
+                      //                     fontSize: isTablet ? 18 : 16,
+                      //                     fontWeight: FontWeight.bold),
+                      //               ),
+                      //               const SizedBox(height: 6),
+                      //               Text(
+                      //                 "Receive one inspiring quote each day at a time you choose.",
+                      //                 style: TextStyle(
+                      //                     fontSize: isTablet ? 15 : 13,
+                      //                     color: Colors.black54,
+                      //                     height: 1.2),
+                      //               ),
+                      //             ],
+                      //           ),
+                      //         ),
+                      //         // small status chip
+                      //         const SizedBox(width: 8),
+                      //         Container(
+                      //           padding: EdgeInsets.symmetric(horizontal: isTablet ? 12 : 8, vertical: 6),
+                      //           decoration: BoxDecoration(
+                      //             color: _hasTimeScheduled
+                      //                 ? AppColors.appColor.withOpacity(0.14)
+                      //                 : Colors.grey.withOpacity(0.08),
+                      //             borderRadius: BorderRadius.circular(12),
+                      //           ),
+                      //           child: Text(
+                      //             _hasTimeScheduled ? 'Scheduled' : 'Not scheduled',
+                      //             style: TextStyle(
+                      //                 color: _hasTimeScheduled
+                      //                     ? AppColors.appColor
+                      //                     : Colors.black54,
+                      //                 fontWeight: FontWeight.w600,
+                      //                 fontSize: isTablet ? 13 : 12),
+                      //           ),
+                      //         )
+                      //       ],
+                      //     ),
+                      //   ),
+                      // ),
 
                       SizedBox(height: isTablet ? 18 : 14),
 
@@ -363,8 +384,7 @@ class _NotificationPageState extends State<NotificationPage>
                           ],
                         ),
                         child: Padding(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: horizontalPadding, vertical: isTablet ? 20 : 16),
+                          padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: isTablet ? 20 : 16),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
@@ -454,20 +474,22 @@ class _NotificationPageState extends State<NotificationPage>
         : buildNoQuotes())
         : const SizedBox.shrink();
 
-    final buttonRow = Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        buildTimePickerButton(
-          context,
-          label: _hasTimeScheduled ? "Reschedule" : "Schedule",
-          initialTime: selectedTime,
-          onTimeChanged: _onTimeChanged,
-        ),
-        if (_hasTimeScheduled) ...[
-          const SizedBox(width: 12),
-          buildCancelButton(onCancel: _cancelAllNotifications),
+    final buttonRow = Container(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          buildTimePickerButton(
+            context,
+            label: _hasTimeScheduled ? "Reschedule" : "Schedule",
+            initialTime: selectedTime,
+            onTimeChanged: _onTimeChanged,
+          ),
+          if (_hasTimeScheduled) ...[
+            const SizedBox(width: 12),
+            buildCancelButton(onCancel: _cancelAllNotifications),
+          ],
         ],
-      ],
+      ),
     );
 
     return Column(
@@ -481,6 +503,3 @@ class _NotificationPageState extends State<NotificationPage>
     );
   }
 }
-
-
-

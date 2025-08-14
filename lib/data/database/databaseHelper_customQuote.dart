@@ -7,7 +7,7 @@ import '../../model/CustomQuote/custom_quote_model.dart';
 
 class DBCustomQuote {
   static final _dbName     = 'quotes.db';
-  static final _dbVersion  = 3;
+  static final _dbVersion  = 1;
   static final tableName   = 'quotes';
 
   static final columnId         = 'id';
@@ -34,7 +34,7 @@ class DBCustomQuote {
       path,
       version: _dbVersion,
       onCreate: _onCreate,
-      onUpgrade: _onUpgrade,
+      //onUpgrade: _onUpgrade,
     );
   }
 
@@ -46,26 +46,26 @@ class DBCustomQuote {
         $columnAuthor TEXT   NOT NULL,
         $columnColor INTEGER NOT NULL,
         $columnIsBold INTEGER NOT NULL,
-        $columnFontFamily TEXT              
+        $columnFontFamily TEXT,      
         $columnFontColor  INTEGER
       )
     ''');
   }
 
-  FutureOr<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    // if (oldVersion < 2) {
-    //   await db.execute('''
-    //     ALTER TABLE $tableName
-    //     ADD COLUMN $columnFontFamily TEXT DEFAULT 'Open Sans'
-    //   ''');
-    // }
-    if (oldVersion < 3) {
-      await db.execute('''
-        ALTER TABLE $tableName
-        ADD COLUMN $columnFontColor INTEGER DEFAULT ${0xFFFFFFFF}
-      ''');
-    }
-  }
+  // FutureOr<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+  //   // if (oldVersion < 2) {
+  //   //   await db.execute('''
+  //   //     ALTER TABLE $tableName
+  //   //     ADD COLUMN $columnFontFamily TEXT DEFAULT 'Open Sans'
+  //   //   ''');
+  //   // }
+  //   if (oldVersion < 3) {
+  //     await db.execute('''
+  //       ALTER TABLE $tableName
+  //       ADD COLUMN $columnFontColor INTEGER DEFAULT ${0xFFFFFFFF}
+  //     ''');
+  //   }
+  // }
 
   Future<int> insertQuote(CustomQuoteModel quote) async {
     final db = await database;

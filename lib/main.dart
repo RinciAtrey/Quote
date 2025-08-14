@@ -1,7 +1,11 @@
+import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_snake_navigationbar/flutter_snake_navigationbar.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:quotes_daily/Utils/colors/AppColors.dart';
-import 'package:timezone/data/latest.dart' as tz;
+import 'package:quotes_daily/view/onBoardingPages/mainBoardingPage.dart';
+import 'package:timezone/data/latest_all.dart' as tzdata;
+import 'package:timezone/timezone.dart' as tz;
 import 'Utils/notifications/notification_service.dart';
 import 'Utils/routes/routes.dart';
 import 'View/MainPages/notificationPage.dart';
@@ -11,11 +15,40 @@ import 'View/MainPages/custom_quote.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  tz.initializeTimeZones();
-  await NotificationService().initNotifications();
+
+  // timezone init once
+  try {
+    tzdata.initializeTimeZones();
+    tz.setLocalLocation(tz.getLocation('Asia/Kolkata'));
+  } catch (e) {
+    print('Timezone init failed in main: $e');
+  }
+
+  // initialize alarm manager exactly once
+  try {
+    await AndroidAlarmManager.initialize();
+  } catch (e) {
+    print('AndroidAlarmManager.initialize() failed: $e');
+  }
+
+  // init notifications and channels
+  final notificationService = NotificationService();
+  try {
+    await notificationService.initNotifications();
+  } catch (e) {
+    print('NotificationService.initNotifications() failed in main: $e');
+  }
+
+  // ensure any previously scheduled alarm is (re)created BEFORE UI starts
+  try {
+    await notificationService.ensureAlarmScheduledFromPrefs();
+  } catch (e) {
+    print('ensureAlarmScheduledFromPrefs() failed in main: $e');
+  }
 
   runApp(MyApp());
 }
+
 
 class MyApp extends StatelessWidget {
   @override
@@ -23,7 +56,20 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Daily Quotes',
       debugShowCheckedModeBanner: false,
-      home: HomeScreen(),
+      home: LandingPage(),
+      themeMode: ThemeMode.light,
+      theme: ThemeData(
+        textTheme: GoogleFonts.arimoTextTheme(                  //montserratTextTheme
+          Theme.of(context).textTheme,
+        ),
+
+        // appBarTheme: AppBarTheme(
+        //   titleTextStyle: GoogleFonts.lato(
+        //     fontSize: 22
+        //   ),
+        //   // toolbarTextStyle: GoogleFonts.poppins(), // for backwards compatibility
+        // ),
+      ),
       onGenerateRoute: Routes.generateRoute,
     );
   }
@@ -52,6 +98,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
+    backgroundColor: AppColors.appColor.withAlpha(10),
     body: SafeArea(
       child: PageView(
         controller: _pageController,

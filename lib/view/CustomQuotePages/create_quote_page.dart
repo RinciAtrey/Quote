@@ -167,7 +167,7 @@ class _CreateQuotePageState extends State<CreateQuotePage> {
         actions: [
           TextButton(
             onPressed: _saveQuotes,
-            child: const Text('Save'),
+            child: const Text('Save', style: TextStyle(color: Colors.black),),
           ),
         ],
         elevation: 0,
@@ -309,7 +309,7 @@ class _CreateQuotePageState extends State<CreateQuotePage> {
 
           // Font Family
           const SizedBox(height: 8),
-          const Text('Font Family', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+          const Text('Font Style', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           SizedBox(
             height: 48,

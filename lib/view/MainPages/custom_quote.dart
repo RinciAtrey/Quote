@@ -37,31 +37,39 @@ class _CustomQuoteState extends State<CustomQuote> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-          elevation: 0,
-          backgroundColor: AppColors.appColor,
-          titleSpacing: 0,
-          title:
-          Padding(padding: EdgeInsets.all(8),
-            child: Row(
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white.withAlpha(30),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  padding: const EdgeInsets.all(8),
-                  child: Icon(Icons.quora,
-                      color: Colors.white),
-                ),
-                const SizedBox(width: 12),
-                const Text(
-                  "My Quotes",
-                  style: TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold),
-                ),
-              ],
+        titleSpacing: 0,
+        backgroundColor: Colors.transparent,
+        elevation: 6,
+        foregroundColor: Colors.white,
+        //increases height
+        toolbarHeight: 70,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            bottomLeft: Radius.circular(18),
+            bottomRight: Radius.circular(18),
+          ),
+        ),
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            color: AppColors.appColor,
+            borderRadius: const BorderRadius.only(
+              bottomLeft: Radius.circular(18),
+              bottomRight: Radius.circular(18),
             ),
-          )
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.12),
+                blurRadius: 16,
+                offset: Offset(0, 8),
+              ),
+            ],
+          ),
+        ),
+        title:  Text(
+            'My Quotes',
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white),
+          ),
+        leading: Icon(Icons.create_outlined),
       ),
       body: _quotes.isEmpty
           ? Center(
@@ -187,7 +195,7 @@ class _CustomQuoteState extends State<CustomQuote> {
                         onPressed: () {
                           _delete(q.id!);
                         },
-                        icon: Icon(Icons.delete, color: Theme.of(context).colorScheme.onBackground),
+                        icon: Icon(Icons.delete, color: Colors.white),
                       ),
                     ],
                   ),

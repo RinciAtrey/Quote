@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 import 'package:quotes_daily/Utils/colors/AppColors.dart';
 import 'package:quotes_daily/data/response/status.dart';
 import 'package:quotes_daily/view/ExplorePages/card_design.dart';
@@ -20,7 +21,8 @@ class MainExplorePage extends StatelessWidget {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Quotes Explorer'),
+          centerTitle: true,
+          title: Text('Arty', style: TextStyle(color: AppColors.appColor, fontWeight: FontWeight.bold),),
         ),
         body: const QuotesListView(),
       ),
@@ -45,9 +47,20 @@ class _QuotesListViewState extends State<QuotesListView>
     final status = viewModel.quotesList.status;
 
     if (status == Status.LOADING) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(child: Lottie.asset("assets/animations/loadingTeddy.json",
+          height: 200));
     } else if (status == Status.ERROR) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Lottie.asset("assets/animations/loadingTeddy.json",
+                height: 200
+            ),
+            Text("Oops an error occurred", style: TextStyle(color: AppColors.appColor),)
+          ],
+        ),
+      );
     } else if (status == Status.COMPLETED) {
       final quotes = viewModel.quotesList.data!;
       final cards = quotes.asMap().entries.map((entry) {
@@ -121,7 +134,8 @@ class _QuotesListViewState extends State<QuotesListView>
 
       return CardDesign(cards: cards, quoteList: quotes);
     } else {
-      return const Center(child: CircularProgressIndicator());
+      return Center(child: Lottie.asset("assets/animations/loadingTeddy.json",
+          height: 200),);
     }
   }
 
